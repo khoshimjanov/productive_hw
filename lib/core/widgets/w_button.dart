@@ -18,7 +18,7 @@ class AnimatedButton extends StatefulWidget {
 }
 
 class _AnimatedButtonState extends State<AnimatedButton> {
-  double width =2500;
+  double width = 2500;
   double height = 70;
   double verticalMargin = 40;
   double horizontalMargin = 50;
@@ -73,7 +73,7 @@ class _AnimatedButtonState extends State<AnimatedButton> {
   }
 }
 
-class WButton extends StatelessWidget {
+class WButton extends StatefulWidget {
   final Function() onTap;
   final String text;
   final bool isDisabled;
@@ -86,7 +86,7 @@ class WButton extends StatelessWidget {
   final double? height;
   final Widget? child;
 
-  WButton({
+  const WButton({
     required this.onTap,
     this.isDisabled = false,
     this.isLoading = false,
@@ -101,46 +101,113 @@ class WButton extends StatelessWidget {
     super.key,
   });
 
+  @override
+  State<WButton> createState() => _WButtonState();
+}
+
+class _WButtonState extends State<WButton> with SingleTickerProviderStateMixin {
+  late AnimationController animationController;
+  late Animation<double> animation;
+
+  @override
+  void initState() {
+    animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
+    animation = Tween<double>(begin: 1, end: 0).animate(animationController);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    animationController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        if (!isDisabled && !isLoading) {
-          onTap();
+        if (!widget.isDisabled && !widget.isLoading) {
+          widget.onTap();
         }
+        if (animationController.status == AnimationStatus.dismissed) {
+          animationController.forward();
+        } else if (animationController.status == AnimationStatus.completed) {
+          animationController.reverse();
+        }
+        setState(() {});
       },
-      child: Container(
-        height: height,
-        width: width ?? double.maxFinite,
-        alignment: Alignment.center,
-        margin: margin ?? EdgeInsets.zero,
-        padding: padding ?? const EdgeInsets.symmetric(vertical: 15),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          color: isDisabled ? disabledButtonColor : buttonColor ?? wButtonColor,
-        ),
-        child: Builder(
-          builder: (_) {
-            if (isLoading) {
-              return const CupertinoActivityIndicator();
-            }
-            if (child == null) {
-              return Text(
-                text,
-                style: style ??
-                    TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: isDisabled ? white.withOpacity(.3) : white,
-                    ),
-              );
-            } else {
-              return child!;
-            }
-          },
+      child:
+          // WFade(
+          //   animation: animation,
+          // )
+
+          WFade(
+        animation: animation,
+        child: Container(
+          height: widget.height,
+          width: widget.width ?? double.maxFinite,
+          alignment: Alignment.center,
+          margin: widget.margin ?? EdgeInsets.zero,
+          padding: widget.padding ?? const EdgeInsets.symmetric(vertical: 15),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            color: widget.isDisabled
+                ? disabledButtonColor
+                : widget.buttonColor ?? wButtonColor,
+          ),
+          child: Builder(
+            builder: (_) {
+              if (widget.isLoading) {
+                return const CupertinoActivityIndicator();
+              }
+              if (widget.child == null) {
+                return Text(
+                  widget.text,
+                  style: widget.style ??
+                      TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color:
+                            widget.isDisabled ? white.withOpacity(.3) : white,
+                      ),
+                );
+              } else {
+                return widget.child!;
+              }
+            },
+          ),
         ),
       ),
     );
   }
 }
+
+class WFade extends StatelessWidget {
+  final Animation<double> animation;
+  final Widget child;
+
+  const WFade({super.key, required this.animation, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: animation,
+      child: Container(
+        // height: 42,
+        // width: 90,
+        decoration: BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: child,
+      ),
+    );
+  }
+}
+
+//  onPressed: () {
+
+//         },
